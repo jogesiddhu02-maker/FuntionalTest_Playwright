@@ -5,6 +5,7 @@ import java.time.Duration;
 import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -12,17 +13,19 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
-public class Demo{
+public class DemoQATest {
+
     private WebDriver driver;
     private WebDriverWait wait;
     private JavascriptExecutor js;
 
-    public static void main(String[] args) {
-        new Demo().run();
-    }
-
-    public void run() {
+    @BeforeClass
+    public void setUp() {
         ChromeOptions options = new ChromeOptions();
         options.addArguments("--start-maximized");
 
@@ -30,29 +33,15 @@ public class Demo{
         wait = new WebDriverWait(driver, Duration.ofSeconds(12));
         js = (JavascriptExecutor) driver;
 
-        try {
-            driver.get("https://demoqa.com/");
-            System.out.println("Title: " + driver.getTitle());
-
-            testTextBox();
-            testCheckBox();
-            testRadioButton();
-            testPracticeForm();
-            testButtons();
-            testAlerts();
-            testDynamicProperties();
-
-            System.out.println("\nAll DemoQA functionalities completed successfully.");
-        } finally {
-            driver.quit();
-        }
+        driver.get("https://demoqa.com/");
+        System.out.println("Title: " + driver.getTitle());
     }
 
     // ELEMENTS -> Text Box
-    private void testTextBox() {
+    @Test(priority = 1)
+    public void testTextBox() {
         driver.get("https://demoqa.com/text-box");
         System.out.println("URL: " + driver.getCurrentUrl());
-        System.out.println(driver.findElement(By.tagName("body")).getText());
 
         driver.findElement(By.id("userName")).sendKeys("Siddhu Joge");
         driver.findElement(By.id("userEmail")).sendKeys("jogesiddhu02@gmail.com");
@@ -63,8 +52,14 @@ public class Demo{
 
         String result = driver.findElement(By.id("output")).getText();
         System.out.println("\nText Box Result:\n" + result);
+
+        Assert.assertTrue(result.contains("Siddhu Joge"),
+                "Text Box output did not contain the submitted name");
     }
-    private void testCheckBox() {
+
+    // ELEMENTS -> Check Box
+    @Test(priority = 2)
+    public void testCheckBox() {
         driver.get("https://demoqa.com/checkbox");
 
         By homeCheckBox = By.cssSelector(
@@ -79,12 +74,15 @@ public class Demo{
         wait.until(ExpectedConditions.attributeToBe(
                 homeCheckBox, "aria-checked", "true"));
 
-        System.out.println("\nCheck Box Selected: "
-                + driver.findElement(homeCheckBox)
-                        .getAttribute("aria-checked"));
+        String checkedState = driver.findElement(homeCheckBox).getAttribute("aria-checked");
+        System.out.println("\nCheck Box Selected: " + checkedState);
+
+        Assert.assertEquals(checkedState, "true", "Home checkbox was not checked");
     }
+
     // ELEMENTS -> Radio Button
-    private void testRadioButton() {
+    @Test(priority = 3)
+    public void testRadioButton() {
         driver.get("https://demoqa.com/radio-button");
 
         By yesRadio = By.id("yesRadio");
@@ -97,10 +95,15 @@ public class Demo{
                         d.findElement(yesRadio))));
 
         System.out.println("\nRadio Button Selected: Yes");
+
+        boolean isChecked = (Boolean) js.executeScript(
+                "return arguments[0].checked;", driver.findElement(yesRadio));
+        Assert.assertTrue(isChecked, "Yes radio button was not selected");
     }
 
     // FORMS -> Practice Form
-    private void testPracticeForm() {
+    @Test(priority = 4)
+    public void testPracticeForm() {
         driver.get("https://demoqa.com/automation-practice-form");
 
         driver.findElement(By.id("firstName")).sendKeys("Siddhu");
@@ -110,7 +113,7 @@ public class Demo{
         driver.findElement(By.id("userNumber")).sendKeys("9876543210");
 
         driver.findElement(By.id("subjectsInput")).sendKeys("Maths");
-        driver.findElement(By.id("subjectsInput")).sendKeys(org.openqa.selenium.Keys.ENTER);
+        driver.findElement(By.id("subjectsInput")).sendKeys(Keys.ENTER);
 
         click(By.cssSelector("label[for='hobbies-checkbox-1']"));
         driver.findElement(By.id("currentAddress")).sendKeys("Pune, Maharashtra");
@@ -120,14 +123,17 @@ public class Demo{
         WebElement modal = wait.until(
                 ExpectedConditions.visibilityOfElementLocated(By.className("modal-content")));
 
-        System.out.println("\nPractice Form submitted: "
-                + modal.getText().contains("Thanks for submitting the form"));
+        boolean submitted = modal.getText().contains("Thanks for submitting the form");
+        System.out.println("\nPractice Form submitted: " + submitted);
 
         click(By.id("closeLargeModal"));
+
+        Assert.assertTrue(submitted, "Practice form submission confirmation not shown");
     }
 
     // ELEMENTS -> Buttons
-    private void testButtons() {
+    @Test(priority = 5)
+    public void testButtons() {
         driver.get("https://demoqa.com/buttons");
 
         Actions actions = new Actions(driver);
@@ -135,21 +141,26 @@ public class Demo{
         WebElement doubleClickButton = driver.findElement(By.id("doubleClickBtn"));
         scrollTo(doubleClickButton);
         actions.doubleClick(doubleClickButton).perform();
-        System.out.println("\nDouble Click: "
-                + driver.findElement(By.id("doubleClickMessage")).getText());
+        String doubleClickMsg = driver.findElement(By.id("doubleClickMessage")).getText();
+        System.out.println("\nDouble Click: " + doubleClickMsg);
 
         WebElement rightClickButton = driver.findElement(By.id("rightClickBtn"));
         actions.contextClick(rightClickButton).perform();
-        System.out.println("Right Click: "
-                + driver.findElement(By.id("rightClickMessage")).getText());
+        String rightClickMsg = driver.findElement(By.id("rightClickMessage")).getText();
+        System.out.println("Right Click: " + rightClickMsg);
 
         click(By.xpath("//button[text()='Click Me']"));
-        System.out.println("Normal Click: "
-                + driver.findElement(By.id("dynamicClickMessage")).getText());
+        String normalClickMsg = driver.findElement(By.id("dynamicClickMessage")).getText();
+        System.out.println("Normal Click: " + normalClickMsg);
+
+        Assert.assertTrue(doubleClickMsg.contains("double click"), "Double click message missing");
+        Assert.assertTrue(rightClickMsg.contains("right click"), "Right click message missing");
+        Assert.assertTrue(normalClickMsg.contains("click"), "Normal click message missing");
     }
 
     // ALERTS, FRAME & WINDOWS -> Alerts
-    private void testAlerts() {
+    @Test(priority = 6)
+    public void testAlerts() {
         driver.get("https://demoqa.com/alerts");
 
         click(By.id("alertButton"));
@@ -165,29 +176,32 @@ public class Demo{
         click(By.id("confirmButton"));
         alert = wait.until(ExpectedConditions.alertIsPresent());
         alert.dismiss();
-        System.out.println("Confirm Alert: "
-                + driver.findElement(By.id("confirmResult")).getText());
+        String confirmResult = driver.findElement(By.id("confirmResult")).getText();
+        System.out.println("Confirm Alert: " + confirmResult);
 
         click(By.id("promtButton"));
         alert = wait.until(ExpectedConditions.alertIsPresent());
         alert.sendKeys("Siddhu Joge");
         alert.accept();
-        System.out.println("Prompt Alert: "
-                + driver.findElement(By.id("promptResult")).getText());
+        String promptResult = driver.findElement(By.id("promptResult")).getText();
+        System.out.println("Prompt Alert: " + promptResult);
+
+        Assert.assertTrue(confirmResult.contains("Cancel"), "Confirm dismiss result not as expected");
+        Assert.assertTrue(promptResult.contains("Siddhu Joge"), "Prompt result did not contain entered text");
     }
 
     // ELEMENTS -> Dynamic Properties
-    private void testDynamicProperties() {
+    @Test(priority = 7)
+    public void testDynamicProperties() {
         driver.get("https://demoqa.com/dynamic-properties");
 
         // Capture this immediately—before the five-second dynamic change.
         By colorChange = By.id("colorChange");
-        String initialClass = driver.findElement(colorChange)
-                .getAttribute("class");
+        String initialClass = driver.findElement(colorChange).getAttribute("class");
 
         wait.until(ExpectedConditions.elementToBeClickable(By.id("enableAfter")));
-        System.out.println("\nEnabled Button: "
-                + driver.findElement(By.id("enableAfter")).isEnabled());
+        boolean enabled = driver.findElement(By.id("enableAfter")).isEnabled();
+        System.out.println("\nEnabled Button: " + enabled);
 
         wait.until(d -> !d.findElement(colorChange)
                 .getAttribute("class").equals(initialClass));
@@ -198,8 +212,18 @@ public class Demo{
         By visibleAfter = By.id("visibleAfter");
         wait.until(ExpectedConditions.visibilityOfElementLocated(visibleAfter));
 
-        System.out.println("Visible Button: "
-                + driver.findElement(visibleAfter).isDisplayed());
+        boolean visible = driver.findElement(visibleAfter).isDisplayed();
+        System.out.println("Visible Button: " + visible);
+
+        Assert.assertTrue(enabled, "Button did not become enabled");
+        Assert.assertTrue(visible, "Button did not become visible");
+    }
+
+    @AfterClass
+    public void tearDown() {
+        if (driver != null) {
+            driver.quit();
+        }
     }
 
     private void click(By locator) {
