@@ -1,1 +1,1 @@
-# FuntionalTest_Selenium
+# FuntionalTest_Playwright
